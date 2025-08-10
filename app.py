@@ -489,6 +489,10 @@ if __name__ == "__main__":
     os.makedirs('static', exist_ok=True)
     os.makedirs('templates', exist_ok=True)
     
+    # Configuração para produção (Render) e desenvolvimento
+    port = int(os.environ.get('PORT', 8080))
+    host = os.environ.get('HOST', '0.0.0.0')
+    
     print("🎯 Servidor Bingo da Golden Club iniciado!")
-    print("🌐 Acesse: http://localhost:8080")
-    socketio.run(app, debug=False, host='127.0.0.1', port=8080)
+    print(f"🌐 Rodando em: {host}:{port}")
+    socketio.run(app, debug=False, host=host, port=port)
