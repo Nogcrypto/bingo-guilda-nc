@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo da Golden Club - Lobby</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="lobby-page">
+    <header class="game-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='logo.svg') }}" alt="Golden Club" class="header-logo">
+                <h1>BINGO DA GOLDEN CLUB</h1>
+            </div>
+            
+            <div class="user-section">
+                <span class="welcome-text">Bem-vindo, <strong>{{ username }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="btn-logout">Sair</a>
+            </div>
+        </div>
+    </header>
+    
+    <main class="lobby-content">
+        <div class="lobby-container">
+            <!-- Seção de Criar Sala -->
+            <section class="create-room-section">
+                <h2>🏠 Criar Nova Sala</h2>
+                <form method="POST" action="{{ url_for('create_room') }}" class="create-room-form">
+                    <div class="input-group">
+                        <input type="text" 
+                               name="room_name" 
+                               placeholder="Nome da Sala" 
+                               required 
+                               minlength="3"
+                               maxlength="30"
+                               autocomplete="off">
+                        <button type="submit" class="btn-create">
+                            <span>Criar Sala</span>
+                            <span class="btn-icon">➕</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+            
+            <!-- Seção de Salas Disponíveis -->
+            <section class="rooms-section">
+                <h2>🎮 Salas Disponíveis</h2>
+                
+                {% if rooms %}
+                <div class="rooms-grid">
+                    {% for room_name, room_info in rooms.items() %}
+                    <div class="room-card">
+                        <div class="room-header">
+                            <h3 class="room-name">{{ room_name }}</h3>
+                            <span class="room-status {{ 'active' if room_info.is_active else 'waiting' }}">
+                                {{ 'Em Jogo' if room_info.is_active else 'Aguardando' }}
+                            </span>
+                        </div>
+                        
+                        <div class="room-info">
+                            <div class="info-item">
+                                <span class="info-label">👑 Admin:</span>
+                                <span class="info-value">{{ room_info.admin }}</span>
+                            </div>
+                            
+                            <div class="info-item">
+                                <span class="info-label">👥 Jogadores:</span>
+                                <span class="info-value">{{ room_info.players_count }}/{{ room_info.max_players }}</span>
+                            </div>
+                            
+                            {% if room_info.numbers_drawn %}
+                            <div class="info-item">
+                                <span class="info-label">🎲 Números:</span>
+                                <span class="info-value">{{ room_info.numbers_drawn|length }}/75</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="room-actions">
+                            {% if room_info.players_count < room_info.max_players %}
+                            <a href="{{ url_for('room', room_name=room_name) }}" class="btn-join">
+                                <span>Entrar</span>
+                                <span class="btn-icon">🚪</span>
+                            </a>
+                            {% else %}
+                            <button class="btn-full" disabled>
+                                <span>Sala Cheia</span>
+                                <span class="btn-icon">🚫</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-rooms">
+                    <div class="no-rooms-icon">🏠</div>
+                    <h3>Nenhuma sala disponível</h3>
+                    <p>Seja o primeiro a criar uma sala e começar a diversão!</p>
+                </div>
+                {% endif %}
+            </section>
+            
+            <!-- Estatísticas do Servidor -->
+            <section class="server-stats">
+                <h3>📊 Estatísticas do Servidor</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ rooms|length }}</span>
+                        <span class="stat-label">Salas Ativas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ rooms.values()|map(attribute='players_count')|sum }}</span>
+                        <span class="stat-label">Jogadores Online</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">50</span>
+                        <span class="stat-label">Max por Sala</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <footer class="game-footer">
+        <p>&copy; 2024 Bingo da Golden Club - Desenvolvido para a Guilda</p>
+    </footer>
+    
+    <script>
+        // Auto-refresh da página a cada 30 segundos para atualizar lista de salas
+        setInterval(function() {
+            window.location.reload();
+        }, 30000);
+        
+        // Animação de entrada das salas
+        document.addEventListener('DOMContentLoaded', function() {
+            const roomCards = document.querySelectorAll('.room-card');
+            
+            roomCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in');
+            });
+        });
+    </script>
+</body>
+</html>

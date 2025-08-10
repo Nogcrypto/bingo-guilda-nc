@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo da Golden Club - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.svg') }}" alt="Golden Club" class="logo">
+            <h1 class="game-title">BINGO DA GOLDEN CLUB</h1>
+        </div>
+        
+        <div class="login-form-container">
+            <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                <h2>Entrar no Jogo</h2>
+                
+                {% if error %}
+                <div class="error-message">
+                    <i class="error-icon">⚠️</i>
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <div class="input-group">
+                    <label for="username">Nome do Jogador</label>
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           placeholder="Digite seu nome" 
+                           required 
+                           minlength="3"
+                           maxlength="20"
+                           autocomplete="off">
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <span class="btn-text">ENTRAR NA GUILDA</span>
+                    <span class="btn-icon">🎯</span>
+                </button>
+            </form>
+            
+            <div class="game-info">
+                <h3>Como Jogar</h3>
+                <ul>
+                    <li>🎮 Entre com seu nome de jogador</li>
+                    <li>🏠 Crie ou entre em uma sala</li>
+                    <li>🎲 Aguarde o admin iniciar o jogo</li>
+                    <li>🎯 Marque os números sorteados</li>
+                    <li>🏆 Primeiro a completar a cartela ganha!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="background-animation">
+        <div class="floating-number">B-7</div>
+        <div class="floating-number">I-23</div>
+        <div class="floating-number">N-42</div>
+        <div class="floating-number">G-55</div>
+        <div class="floating-number">O-68</div>
+    </div>
+    
+    <script>
+        // Animação dos números flutuantes
+        document.addEventListener('DOMContentLoaded', function() {
+            const numbers = document.querySelectorAll('.floating-number');
+            
+            numbers.forEach((number, index) => {
+                number.style.animationDelay = `${index * 0.5}s`;
+                number.style.left = `${Math.random() * 80 + 10}%`;
+                number.style.animationDuration = `${3 + Math.random() * 2}s`;
+            });
+        });
+        
+        // Foco automático no campo de nome
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>

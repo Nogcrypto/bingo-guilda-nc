@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo da Golden Club - {{ room_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .bingo-cards-section {
+            margin: 20px 0;
+        }
+        
+        .cards-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .cards-header h3 {
+            color: #ffd700;
+            margin: 0;
+        }
+        
+        .bingo-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .bingo-card-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #ffd700;
+        }
+        
+        .card-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .winner-badge {
+            color: #ff6b6b;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        
+        .bingo-card {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            border: 2px solid #b8860b;
+        }
+        
+        .bingo-card.winner-card {
+            border-color: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
+        }
+        
+        .card-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            margin-bottom: 8px;
+        }
+        
+        .letter {
+            background: #8b0000;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 1em;
+            border-radius: 6px;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+        }
+        
+        .card-cell {
+            background: white;
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 8px 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-cell.marked {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-color: #c92a2a;
+        }
+        
+        .card-cell.free-space {
+            background: linear-gradient(135deg, #51cf66, #40c057);
+            color: white;
+            border-color: #37b24d;
+        }
+        
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        /* Estilos para o painel de administração */
+        .cards-manager {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .cards-manager h4 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .player-config {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid #ffd700;
+        }
+        
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .player-name {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .admin-badge {
+            font-size: 1.2em;
+        }
+        
+        .config-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .config-controls label {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .config-controls input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ffd700;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+        
+        /* Estilos para transferir admin */
+        .admin-transfer {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff8c00;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .admin-transfer h4 {
+            color: #ff8c00;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .admin-transfer p {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .admin-player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid #ff8c00;
+        }
+        
+        .btn-transfer-to {
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-transfer-to:hover {
+            background: linear-gradient(45deg, #ff6347, #ff4500);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Estilos para gerenciar prêmio */
+        .prize-manager {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .prize-manager h4 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .prize-manager p {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .prize-input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .prize-input-section input {
+            padding: 12px;
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .prize-input-section input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
+        }
+        
+        .prize-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .btn-set-prize, .btn-clear-prize {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-set-prize {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .btn-set-prize:hover {
+            background: linear-gradient(45deg, #20c997, #17a2b8);
+            transform: translateY(-2px);
+        }
+        
+        .btn-clear-prize {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+            color: white;
+        }
+        
+        .btn-clear-prize:hover {
+            background: linear-gradient(45deg, #fd7e14, #ffc107);
+            transform: translateY(-2px);
+        }
+        
+        .btn-prize {
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+        }
+        
+        .btn-prize:hover {
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+        }
+        
+        .prize-value {
+            color: #ffd700 !important;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="room-page">
+    <header class="game-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='logo.svg') }}" alt="Golden Club" class="header-logo">
+                <h1>{{ room_name }}</h1>
+            </div>
+            
+            <div class="user-section">
+                <span class="welcome-text">{{ username }}</span>
+                {% if is_admin %}
+                <span class="admin-badge">👑 ADMIN</span>
+                {% endif %}
+                <a href="{{ url_for('lobby') }}" class="btn-logout">Voltar ao Lobby</a>
+            </div>
+        </div>
+    </header>
+    
+    <main class="room-content">
+        <div class="game-container">
+            <!-- Painel de Controle (Admin) -->
+            {% if is_admin %}
+            <section class="admin-panel">
+                <h3>🎮 Controles do Administrador</h3>
+                <div class="admin-controls">
+                    <button id="startGameBtn" class="btn-admin btn-start" onclick="startGame()">
+                        <span>Iniciar Jogo</span>
+                        <span class="btn-icon">🚀</span>
+                    </button>
+                    
+                    <button id="drawNumberBtn" class="btn-admin btn-draw" onclick="drawNumber()" disabled>
+                        <span>Sortear Número</span>
+                        <span class="btn-icon">🎲</span>
+                    </button>
+                    
+                    <button id="resetGameBtn" class="btn-admin btn-reset" onclick="resetGame()">
+                        <span>Reiniciar Jogo</span>
+                        <span class="btn-icon">🔄</span>
+                    </button>
+                    
+                    <button id="manageCardsBtn" class="btn-admin btn-manage" onclick="toggleCardsManager()">
+                        <span>Gerenciar Cartelas</span>
+                        <span class="btn-icon">📋</span>
+                    </button>
+                    
+                    <button id="transferAdminBtn" class="btn-admin btn-transfer" onclick="toggleAdminTransfer()">
+                        <span>Transferir Admin</span>
+                        <span class="btn-icon">👑</span>
+                    </button>
+                    
+                    <button id="setPrizeBtn" class="btn-admin btn-prize" onclick="togglePrizeManager()">
+                        <span>Definir Prêmio</span>
+                        <span class="btn-icon">🏆</span>
+                    </button>
+                </div>
+                
+                <!-- Gerenciador de Cartelas -->
+                <div id="cardsManager" class="cards-manager" style="display: none;">
+                    <h4>📋 Configuração de Cartelas por Jogador</h4>
+                    <div id="playersConfig" class="players-config">
+                        <!-- Lista de jogadores será carregada dinamicamente -->
+                    </div>
+                </div>
+                
+                <!-- Transferir Admin -->
+                <div id="adminTransfer" class="admin-transfer" style="display: none;">
+                    <h4>👑 Transferir Privilégios de Administrador</h4>
+                    <p>Selecione um jogador para transferir os privilégios de administrador:</p>
+                    <div id="adminPlayersList" class="admin-players-list">
+                        <!-- Lista de jogadores será carregada dinamicamente -->
+                    </div>
+                </div>
+                
+                <!-- Gerenciar Prêmio -->
+                <div id="prizeManager" class="prize-manager" style="display: none;">
+                    <h4>🏆 Definir Prêmio do Jogo</h4>
+                    <p>Digite o prêmio para este jogo de bingo (opcional):</p>
+                    <div class="prize-input-section">
+                        <input type="text" id="prizeInput" placeholder="Ex: R$ 100,00 ou Cesta Básica" maxlength="100">
+                        <div class="prize-buttons">
+                            <button onclick="setPrize()" class="btn-set-prize">Definir Prêmio</button>
+                            <button onclick="clearPrize()" class="btn-clear-prize">Remover Prêmio</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+            
+            <!-- Status do Jogo -->
+            <section class="game-status">
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">👥 Jogadores</span>
+                        <span id="playersCount" class="status-value">0/50</span>
+                    </div>
+                    
+                    <div class="status-item">
+                        <span class="status-label">🎲 Números Sorteados</span>
+                        <span id="numbersDrawn" class="status-value">0/75</span>
+                    </div>
+                    
+                    <div class="status-item">
+                        <span class="status-label">🎯 Status</span>
+                        <span id="gameStatus" class="status-value game-waiting">Aguardando</span>
+                    </div>
+                    
+                    <div class="status-item prize-status" id="prizeStatus" style="display: none;">
+                        <span class="status-label">🏆 Prêmio</span>
+                        <span id="prizeValue" class="status-value prize-value">-</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Área Principal do Jogo -->
+            <div class="game-main">
+                <!-- Cartelas de Bingo -->
+                <section class="bingo-cards-section">
+                    <h3>🎯 Minhas Cartelas (<span id="cardsCount">0</span>)</h3>
+                    <div id="bingoCards" class="bingo-cards-container">
+                        <!-- Cartelas serão geradas dinamicamente -->
+                    </div>
+                </section>
+                
+                <!-- Números Sorteados -->
+                <section class="drawn-numbers-section">
+                    <h3>🎲 Números Sorteados</h3>
+                    <div id="drawnNumbers" class="drawn-numbers">
+                        <!-- Números sorteados aparecerão aqui -->
+                    </div>
+                    
+                    <div id="lastNumber" class="last-number">
+                        <span class="last-label">Último Número:</span>
+                        <span id="lastNumberValue" class="last-value">-</span>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Lista de Jogadores -->
+            <section class="players-section">
+                <h3>👥 Jogadores na Sala</h3>
+                <div id="playersList" class="players-list">
+                    <!-- Lista de jogadores será atualizada dinamicamente -->
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <!-- Modal de Vitória -->
+    <div id="winnerModal" class="modal">
+        <div class="modal-content">
+            <div class="winner-animation">
+                <div class="trophy">🏆</div>
+                <h2 id="winnerText">BINGO!</h2>
+                <p id="winnerMessage"></p>
+                <button onclick="closeWinnerModal()" class="btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notificações -->
+    <div id="notifications" class="notifications"></div>
+    
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script type="application/json" id="template-data">
+        {
+            "roomName": "{{ room_name }}",
+            "username": "{{ username }}",
+            "isAdmin": {{ is_admin|tojson }}
+        }
+    </script>
+    <script>
+        // Configuração do WebSocket
+        const templateData = JSON.parse(document.getElementById('template-data').textContent);
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: 2,
+            reconnectionDelay: 2000,
+            timeout: 10000,
+            forceNew: true
+        });
+        const roomName = templateData.roomName;
+        const username = templateData.username;
+        const isAdmin = templateData.isAdmin;
+        
+        let gameCards = [];
+        let playersConfig = [];
+        let isConnected = false;
+        let gameStarted = false;
+        
+        // Debug de conexão
+        socket.on('connect', function() {
+            console.log('Socket conectado:', socket.id);
+            isConnected = true;
+            // Aguarda um pouco antes de entrar na sala
+            setTimeout(() => {
+                socket.emit('join_room', { room: roomName });
+            }, 500);
+        });
+        
+        socket.on('disconnect', function(reason) {
+            console.log('Socket desconectado:', reason);
+            isConnected = false;
+        });
+        
+        socket.on('reconnect', function() {
+            console.log('Socket reconectado');
+            isConnected = true;
+            // Reconecta à sala após reconexão
+            setTimeout(() => {
+                socket.emit('join_room', { room: roomName });
+            }, 500);
+        });
+        
+        // Event Listeners do Socket
+        socket.on('player_joined', function(data) {
+            updatePlayersList(data.players);
+            updatePlayersCount(data.players_count);
+            showNotification(`${data.username} entrou na sala`, 'info');
+            
+            // Se eu me juntei à sala e me tornei admin, recarrega a página
+            if (data.username === username && data.is_admin && !isAdmin) {
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        });
+        
+        socket.on('player_left', function(data) {
+            updatePlayersCount(data.players_count);
+            if (data.players) {
+                updatePlayersList(data.players);
+            }
+            showNotification(`${data.username} saiu da sala`, 'warning');
+        });
+        
+        socket.on('game_state', function(data) {
+            console.log('Recebido game_state:', data);
+            
+            // Atualiza o status do jogo
+            if (data.room_info) {
+                gameStarted = data.room_info.game_started || false;
+            }
+            
+            if (data.cards && data.cards.length > 0) {
+                console.log('Cartelas recebidas:', data.cards.length);
+                gameCards = data.cards;
+                renderBingoCards();
+            } else {
+                console.log('Nenhuma cartela recebida ou array vazio');
+            }
+            
+            if (data.numbers_drawn) {
+                updateDrawnNumbers(data.numbers_drawn);
+            }
+            
+            if (data.players) {
+                updatePlayersList(data.players);
+            }
+            
+            if (data.players_count !== undefined) {
+                updatePlayersCount(data.players_count);
+            }
+            
+            updateGameStatus(data.room_info);
+            
+            if (isAdmin) {
+                loadPlayersConfig();
+            }
+        });
+        
+        socket.on('game_started', function(data) {
+            gameStarted = true;
+            updateGameStatus(data.room_info);
+            showNotification('Jogo iniciado! Boa sorte!', 'success');
+            
+            if (isAdmin) {
+                document.getElementById('startGameBtn').disabled = true;
+                document.getElementById('drawNumberBtn').disabled = false;
+            }
+            
+            // Atualiza as cartelas para mostrar os números
+            renderBingoCards();
+        });
+        
+        socket.on('number_drawn', function(data) {
+            addDrawnNumber(data.number);
+            updateNumbersDrawnCount(data.total_drawn, data.remaining);
+            showNotification(`Número sorteado: ${data.number}`, 'info');
+        });
+        
+        socket.on('card_updated', function(data) {
+            if (data.cards && data.cards.length > 0) {
+                gameCards = data.cards;
+                updateCardsDisplay();
+            }
+        });
+        
+        socket.on('game_finished', function(data) {
+            showWinnerModal(data.winner, data.message);
+            updateGameStatus({ is_active: false, winner: data.winner });
+            
+            if (isAdmin) {
+                document.getElementById('drawNumberBtn').disabled = true;
+            }
+        });
+        
+        socket.on('game_reset', function(data) {
+            gameStarted = false;
+            resetGameDisplay();
+            showNotification('Jogo reiniciado!', 'info');
+            
+            if (isAdmin) {
+                document.getElementById('startGameBtn').disabled = false;
+                document.getElementById('drawNumberBtn').disabled = true;
+            }
+            
+            // Atualiza as cartelas para esconder os números novamente
+            renderBingoCards();
+        });
+        
+        socket.on('error', function(data) {
+            showNotification(data.message, 'error');
+        });
+        
+        socket.on('room_full', function(data) {
+            showNotification(data.message, 'error');
+            setTimeout(() => {
+                window.location.href = '/lobby';
+            }, 2000);
+        });
+        
+        // Novos eventos para gerenciamento de cartelas
+        socket.on('players_config', function(data) {
+            playersConfig = data.players;
+            renderPlayersConfig();
+        });
+        
+        socket.on('player_cards_updated', function(data) {
+            showNotification(`${data.username} agora tem ${data.num_cards} cartela(s)`, 'info');
+            if (isAdmin) {
+                loadPlayersConfig();
+            }
+        });
+        
+        socket.on('cards_regenerated', function(data) {
+            gameCards = data.cards;
+            renderBingoCards();
+            showNotification(data.message, 'success');
+        });
+        
+        socket.on('check_ins_updated', function(data) {
+            showNotification(`Check-ins de ${data.username}: ${data.check_ins}`, 'info');
+            if (isAdmin) {
+                loadPlayersConfig();
+            }
+        });
+        
+        socket.on('admin_transferred', function(data) {
+            showNotification(data.message, 'success');
+            
+            // Se eu era o admin e transferi para outro, recarrega a página
+            if (data.old_admin === username) {
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+            // Se eu recebi admin, recarrega a página
+            else if (data.new_admin === username) {
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        });
+        
+        socket.on('prize_updated', function(data) {
+            updatePrizeDisplay(data.prize);
+            showNotification(data.message, 'success');
+        });
+        
+        // Funções do Jogo
+        function startGame() {
+            socket.emit('start_game', { room: roomName });
+        }
+        
+        function drawNumber() {
+            socket.emit('draw_number', { room: roomName });
+        }
+        
+        function resetGame() {
+            if (confirm('Tem certeza que deseja reiniciar o jogo?')) {
+                socket.emit('reset_game', { room: roomName });
+            }
+        }
+        
+        // Funções de Gerenciamento de Cartelas
+        function toggleCardsManager() {
+            const manager = document.getElementById('cardsManager');
+            if (manager.style.display === 'none') {
+                manager.style.display = 'block';
+                loadPlayersConfig();
+            } else {
+                manager.style.display = 'none';
+            }
+        }
+        
+        function loadPlayersConfig() {
+            socket.emit('get_players_config', { room: roomName });
+        }
+        
+        function setPlayerCards(username, numCards) {
+            socket.emit('set_player_cards', {
+                room: roomName,
+                username: username,
+                num_cards: parseInt(numCards)
+            });
+        }
+        
+        function updateCheckIns(username, checkIns) {
+            socket.emit('update_check_ins', {
+                room: roomName,
+                username: username,
+                check_ins: parseInt(checkIns)
+            });
+        }
+        
+        // Funções de Transferir Admin
+        function toggleAdminTransfer() {
+            const adminTransfer = document.getElementById('adminTransfer');
+            if (adminTransfer.style.display === 'none') {
+                adminTransfer.style.display = 'block';
+                loadAdminPlayersList();
+            } else {
+                adminTransfer.style.display = 'none';
+            }
+        }
+        
+        function loadAdminPlayersList() {
+            const adminPlayersList = document.getElementById('adminPlayersList');
+            adminPlayersList.innerHTML = '';
+            
+            // Carrega lista de jogadores (exceto o admin atual)
+            playersConfig.forEach(player => {
+                if (player.username !== username && !player.is_admin) {
+                    const playerElement = document.createElement('div');
+                    playerElement.className = 'admin-player-item';
+                    playerElement.innerHTML = `
+                        <span class="player-name">${player.username}</span>
+                        <button class="btn-transfer-to" onclick="transferAdminTo('${player.username}')">
+                            Transferir para ${player.username}
+                        </button>
+                    `;
+                    adminPlayersList.appendChild(playerElement);
+                }
+            });
+            
+            if (adminPlayersList.children.length === 0) {
+                adminPlayersList.innerHTML = '<p>Não há outros jogadores na sala para transferir admin.</p>';
+            }
+        }
+        
+        function transferAdminTo(newAdminUsername) {
+            if (confirm(`Tem certeza que deseja transferir os privilégios de administrador para ${newAdminUsername}?`)) {
+                socket.emit('transfer_admin', {
+                    room: roomName,
+                    new_admin: newAdminUsername
+                });
+            }
+        }
+        
+        // Funções de Gerenciamento de Prêmio
+        function togglePrizeManager() {
+            const prizeManager = document.getElementById('prizeManager');
+            if (prizeManager.style.display === 'none') {
+                prizeManager.style.display = 'block';
+                // Carrega o prêmio atual no input
+                const currentPrize = document.getElementById('prizeValue').textContent;
+                if (currentPrize && currentPrize !== '-') {
+                    document.getElementById('prizeInput').value = currentPrize;
+                }
+            } else {
+                prizeManager.style.display = 'none';
+            }
+        }
+        
+        function setPrize() {
+            const prizeInput = document.getElementById('prizeInput');
+            const prize = prizeInput.value.trim();
+            
+            socket.emit('set_prize', {
+                room: roomName,
+                prize: prize
+            });
+            
+            // Fecha o gerenciador após definir
+            document.getElementById('prizeManager').style.display = 'none';
+        }
+        
+        function clearPrize() {
+            if (confirm('Tem certeza que deseja remover o prêmio?')) {
+                socket.emit('set_prize', {
+                    room: roomName,
+                    prize: ''
+                });
+                
+                // Limpa o input e fecha o gerenciador
+                document.getElementById('prizeInput').value = '';
+                document.getElementById('prizeManager').style.display = 'none';
+            }
+        }
+        
+        // Funções de Interface para Múltiplas Cartelas
+        function renderBingoCards() {
+            console.log('renderBingoCards chamada com', gameCards.length, 'cartelas');
+            const cardsContainer = document.getElementById('bingoCards');
+            cardsContainer.innerHTML = '';
+            
+            document.getElementById('cardsCount').textContent = gameCards.length;
+            
+            gameCards.forEach((cardData, cardIndex) => {
+                console.log('Renderizando cartela', cardIndex + 1, ':', cardData);
+                const cardElement = createCardElement(cardData, cardIndex);
+                cardsContainer.appendChild(cardElement);
+            });
+            
+            console.log('Cartelas renderizadas no container:', cardsContainer.children.length);
+        }
+        
+        function createCardElement(cardData, cardIndex) {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'bingo-card-wrapper';
+            
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-title';
+            cardHeader.innerHTML = `
+                <span>Cartela ${cardIndex + 1}</span>
+                ${cardData.is_winner ? '<span class="winner-badge">🏆 VENCEDORA!</span>' : ''}
+            `;
+            
+            const bingoCard = document.createElement('div');
+            bingoCard.className = `bingo-card ${cardData.is_winner ? 'winner-card' : ''}`;
+            
+            const letterHeader = document.createElement('div');
+            letterHeader.className = 'card-header';
+            letterHeader.innerHTML = `
+                <span class="letter">B</span>
+                <span class="letter">I</span>
+                <span class="letter">N</span>
+                <span class="letter">G</span>
+                <span class="letter">O</span>
+            `;
+            
+            const cardGrid = document.createElement('div');
+            cardGrid.className = 'card-grid';
+            
+            console.log('Criando cartela com números:', cardData.card);
+            cardData.card.forEach((number, cellIndex) => {
+                const cell = document.createElement('div');
+                cell.className = 'card-cell';
+                
+                // Mostra números apenas se o jogo começou ou se é o próprio jogador
+                if (gameStarted || cardData.owner === username) {
+                    cell.textContent = number;
+                } else {
+                    cell.textContent = number === 'FREE' ? 'FREE' : '?';
+                }
+                
+                console.log(`Célula ${cellIndex}: número ${number}, textContent: ${cell.textContent}`);
+                
+                if (cardData.marked.includes(number) || number === 'FREE') {
+                    cell.classList.add('marked');
+                }
+                
+                if (number === 'FREE') {
+                    cell.classList.add('free-space');
+                    cell.textContent = 'FREE';
+                }
+                
+                cardGrid.appendChild(cell);
+            });
+            console.log('Grid criado com', cardGrid.children.length, 'células');
+            
+            const cardStats = document.createElement('div');
+            cardStats.className = 'card-stats';
+            cardStats.innerHTML = `
+                <span>Marcados: ${cardData.total_marked}</span>
+                <span>Total: ${cardData.total_numbers}</span>
+            `;
+            
+            bingoCard.appendChild(letterHeader);
+            bingoCard.appendChild(cardGrid);
+            
+            cardWrapper.appendChild(cardHeader);
+            cardWrapper.appendChild(bingoCard);
+            cardWrapper.appendChild(cardStats);
+            
+            return cardWrapper;
+        }
+        
+        function updateCardsDisplay() {
+            renderBingoCards();
+        }
+        
+        function renderPlayersConfig() {
+            const configContainer = document.getElementById('playersConfig');
+            configContainer.innerHTML = '';
+            
+            playersConfig.forEach(player => {
+                const playerConfig = document.createElement('div');
+                playerConfig.className = 'player-config';
+                
+                playerConfig.innerHTML = `
+                    <div class="player-info">
+                        <span class="player-name">${player.username}</span>
+                        ${player.is_admin ? '<span class="admin-badge">👑</span>' : ''}
+                    </div>
+                    <div class="config-controls">
+                        <label>Check-ins:</label>
+                        <input type="number" min="0" max="50" value="${player.check_ins}" 
+                               onchange="updateCheckIns('${player.username}', this.value)">
+                        
+                        <label>Cartelas:</label>
+                        <input type="number" min="1" max="10" value="${player.num_cards}" 
+                               onchange="setPlayerCards('${player.username}', this.value)">
+                    </div>
+                `;
+                
+                configContainer.appendChild(playerConfig);
+            });
+        }
+        
+        function addDrawnNumber(number) {
+            const drawnNumbers = document.getElementById('drawnNumbers');
+            const numberElement = document.createElement('span');
+            numberElement.className = 'drawn-number';
+            numberElement.textContent = number;
+            
+            drawnNumbers.appendChild(numberElement);
+            
+            // Atualiza último número
+            document.getElementById('lastNumberValue').textContent = number;
+            
+            // Scroll para o final
+            drawnNumbers.scrollTop = drawnNumbers.scrollHeight;
+        }
+        
+        function updateDrawnNumbers(numbers) {
+            const drawnNumbers = document.getElementById('drawnNumbers');
+            drawnNumbers.innerHTML = '';
+            
+            numbers.forEach(number => {
+                const numberElement = document.createElement('span');
+                numberElement.className = 'drawn-number';
+                numberElement.textContent = number;
+                drawnNumbers.appendChild(numberElement);
+            });
+            
+            if (numbers.length > 0) {
+                document.getElementById('lastNumberValue').textContent = numbers[numbers.length - 1];
+            }
+        }
+        
+        function updatePlayersList(players) {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+            
+            players.forEach(player => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'player-item';
+                playerElement.innerHTML = `
+                    <span class="player-name">${player}</span>
+                    ${player === username && isAdmin ? '<span class="admin-badge">👑</span>' : ''}
+                `;
+                playersList.appendChild(playerElement);
+            });
+        }
+        
+        function updatePlayersCount(count) {
+            document.getElementById('playersCount').textContent = `${count}/50`;
+        }
+        
+        function updateNumbersDrawnCount(drawn, remaining) {
+            document.getElementById('numbersDrawn').textContent = `${drawn}/75`;
+        }
+        
+        function updateGameStatus(roomInfo) {
+            const statusElement = document.getElementById('gameStatus');
+            
+            if (roomInfo.winner) {
+                statusElement.textContent = 'Finalizado';
+                statusElement.className = 'status-value game-finished';
+            } else if (roomInfo.is_active) {
+                statusElement.textContent = 'Em Jogo';
+                statusElement.className = 'status-value game-active';
+            } else if (roomInfo.game_started) {
+                statusElement.textContent = 'Pausado';
+                statusElement.className = 'status-value game-paused';
+            } else {
+                statusElement.textContent = 'Aguardando';
+                statusElement.className = 'status-value game-waiting';
+            }
+            
+            // Atualiza o prêmio se disponível
+            if (roomInfo.prize !== undefined) {
+                updatePrizeDisplay(roomInfo.prize);
+            }
+        }
+        
+        function updatePrizeDisplay(prize) {
+            const prizeStatus = document.getElementById('prizeStatus');
+            const prizeValue = document.getElementById('prizeValue');
+            
+            if (prize && prize.trim() !== '') {
+                prizeValue.textContent = prize;
+                prizeStatus.style.display = 'block';
+            } else {
+                prizeValue.textContent = '-';
+                prizeStatus.style.display = 'none';
+            }
+        }
+        
+        function showWinnerModal(winner, message) {
+            document.getElementById('winnerText').textContent = winner === username ? 'VOCÊ GANHOU!' : 'BINGO!';
+            document.getElementById('winnerMessage').textContent = message;
+            document.getElementById('winnerModal').style.display = 'flex';
+        }
+        
+        function closeWinnerModal() {
+            document.getElementById('winnerModal').style.display = 'none';
+        }
+        
+        function resetGameDisplay() {
+            document.getElementById('drawnNumbers').innerHTML = '';
+            document.getElementById('lastNumberValue').textContent = '-';
+            document.getElementById('bingoCards').innerHTML = '';
+            gameCards = [];
+            document.getElementById('cardsCount').textContent = '0';
+        }
+        
+        function showNotification(message, type) {
+            const notifications = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            notifications.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        // Cleanup removido para evitar desconexões desnecessárias
+    </script>
+</body>
+</html>
