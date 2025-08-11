@@ -1,10 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 from flask_socketio import SocketIO, join_room, leave_room, emit
-import eventlet
 from models import User, Room
 import os
-
-eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.secret_key = "golden-club-bingo-secret-2024"
